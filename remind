@@ -1,1 +1,156 @@
-/home/andy/scripts/remind
+#! /bin/bash
+
+#
+# Remind - Quickly add reminders to your Google Calendar via CLI - v0.5
+# by Andy Forceno <andy@aurorabox.tech>
+#
+# This script is distributed under the MIT license
+# See license text at end of script
+#
+
+### Changelog:
+#
+# v0.3 - Cleaned up code, added comments
+# 		 Improved OAuth setup process
+#
+
+ver="0.3"
+args=("$@")
+client_id="11641730600-mmlp1qm53uf26c0m8nlf0mtnq5o6nvjp.apps.googleusercontent.com"
+api_key="AIzaSyBqmgl2tdSGphOJD_rJqysFLEPC0e4Z1BQ"
+secret="pc8WovSD9EcJBn43udKHTA0T"
+# This script is brought to you by Echo & the Bunnymen:
+# https://www.youtube.com/watch?v=scuzLOILJYI
+
+Authentication () {
+	scope=${SCOPE:-"https://www.googleapis.com/auth/calendar"}	
+	### Google Calendar OAuth authentication
+	## Step 1:
+	# Initial request to get user code & verification URL needed for user to verify authentication request
+	gdrive_oauth=$(curl -s https://accounts.google.com/o/oauth2/device/code -d "client_id=$client_id&scope=$scope" -H "Accept: application/x-www-form-urlencoded")
+	device_code=$(echo $gdrive_oauth | grep -oP 'device_code"\s*:\s*"\K(.*)"'| cut -f1 -d',' | tr -d '"')
+	user_code=$(echo $gdrive_oauth |  grep -oP 'user_code"\s*:\s*"\K(.*)"' | cut -f1 -d',' | tr -d '"')
+	auth_url=$(echo $gdrive_oauth | grep -oP 'verification_url"\s*:\s*"\K(.*)"' | cut -f1 -d',' | tr -d '"')
+	
+	echo -e "\nYou must authorize Remind with Google Calendar. Enter the following code in your browser to verify this app:
+	$user_code\n"
+	echo "Press any key to open the authorization URL in your web browser"
+	echo "Once you authorize Remind with Google Calendar, you may close the browser window"
+	read -p " If ythe URL doesn't load in your browser, paste this url into your browser: $auth_url"
+	xdg-open "$auth_url"
+	read -p "Press any key to continue..."
+	
+	## Step 2: 
+	# Acquire $access_token and $refresh_token and output to ~/.remindrc
+	oauth_access=$(curl -s https://www.googleapis.com/oauth2/v3/token -d "client_id=$client_id&client_secret=$secret&code=$device_code&grant_type=http://oauth.net/grant_type/device/1.0")
+	access_token=$(echo $oauth_access | grep -oP 'access_token"\s*:\s*"\K(.*)"' | cut -f1 -d',' | tr -d '"')
+	refresh_token=$(echo $oauth_access | grep -oP 'refresh_token"\s*:\s*"\K(.*)"' | cut -f1 -d',' | tr -d '"')
+	
+	# If there is no .remindrc, create it
+	if [ ! -f ~/.remindrc ]; then
+		touch ~/.remindrc
+cat > ~/.remindrc << EOL
+access_token=""
+refresh_token=""
+Authorized="no"
+EOL
+	fi
+
+# Write $access_token and $refresh_token to config file	
+sed -i "s/access_token=.*/access_token="\"$access_token\""/g" ~/.remindrc
+sed -i "s|refresh_token=.*|refresh_token="\"$refresh_token\""|g" ~/.remindrc
+echo -e "\nAccess & refresh token have been saved to ~/.remindrc\n"
+}
+
+validate_token () {
+	# Check for expired or invalid tokens
+	# Arbitrary API call to check for invalid token (requests the last 20 events on your calendar)	
+	cal_list=$(curl -s -H "Authorization: Bearer $access_token" -X GET https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=20&key=$api_key)
+
+	# If $cal_list is empty or contains the word "invalid"
+	# tokens have expired, so refresh them
+	if [[ -n $(echo $cal_list | grep -io "invalid") ]]; then
+		echo -e "Expired access token. Re-authenticating..."
+		get_refresh=$(curl -s https://www.googleapis.com/oauth2/v3/token -d "client_id=$client_id&client_secret=$secret&refresh_token=$refresh_token&grant_type=refresh_token")
+		access_token=$(echo $get_refresh | grep -oP 'access_token"\s*:\s*"\K(.*)"' | cut -f1 -d',' | tr -d '"')
+		sed -i "s/access_token=.*/access_token=$access_token/g" ~/.remindrc
+		echo -e "Access token refreshed!"
+	fi	
+}
+
+quick_add () {
+	# URL-encode the text 
+	text=$(echo "${args[1]}" | sed 's/ /\+/g')
+	post_event=$(curl -s -H "Authorization: Bearer $access_token" -H "Content-Length: 0" -X POST https://www.googleapis.com/calendar/v3/calendars/primary/events/quickAdd?text=$text&key=$api_key)
+	echo "Quick event was successfully added to your calendar!"
+	
+	# TODO: Test if $col_id is accepted by API and works
+	# Generate hex color codes for randomly-colored events!
+	col_id=$(echo -n "$text" | md5sum | cut -c1-6)
+}
+
+# TODO: Test time conversion to RFC3339, construct call to insert an event, test
+event_insert () {
+	# RFC3339 time formatting
+	# User-inputted start and end dates/times needs to be converted to RFC3339 
+	# before sending API request
+	Date commands needs to be the user-inputted time formatted via $(date) then fed thru here
+	rfc_time=$(TZ="America/New York" date '+%FT%T%:z')
+	# or this one:
+	rfc_time2=$(date --rfc-3339=seconds | sed 's/ /T/')
+	
+	# User input
+	read -p "Enter the start time: " start_time
+	read -p "Enter the end time: " end_time
+	read -p "Enter the event description: " text
+	read -p "Enter the reminder time (mins, hrs): " remind_time
+	
+	# Format of request:
+	json="{ "end": { "dateTime": "$end_time" },"start": { "dateTime": "$start_time" }, "description": "$text" }"
+	post_event=$(curl -s -H "Authorization: Bearer $access_token" -H "Content-length: 0" -X POST https://www.googleapis.com/calendar/v3/calendars/primary/events?key=$api_key -d '$json')
+}
+
+source ~/.remindrc
+
+# Check if authenticated yet
+if [[ "$Authorized" = "no" || -z "$access_token" || -z "$refresh_token" ]]; then
+		Authentication
+		sed -i 's/Authorized=.*/Authorized=yes/g' ~/.remindrc
+fi
+
+case $1 in
+	-a|add)
+#		validate_token
+		echo "Not yet implemented"
+		;;
+	-q|quick)
+		validate_token
+		quick_add
+		;;
+*)
+  cat << EOF
+remind - Quickly add events to your Google Calendar - v$ver
+Usage: remind [OPTIONS] <text>
+
+-a | add 	Add an event with specific start and end times (Not yet implemented)
+-q | quick	Quickly add an event to your calendar
+		<event text> at <time> on <day>
+		"Get milk at 5pm on Wednesday"
+		"Do something at 21:05"
+
+EOF
+;;
+esac
+
+# The MIT License (MIT)
+# Copyright (c) 2016 Andy Forceno
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), 
+# to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+# and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
