@@ -13,7 +13,12 @@ Usage:
 remind [OPTIONS] <text>
 
 -a | add 	Add an event with specific start and end times (Not yet implemented)
+
 -q | quick	Quickly add an event to your calendar
+
 		<event text> at <time> on <day>
+		
 		"Get milk at 5pm on Wednesday"
+		
 		"Do something at 21:05"
+		
