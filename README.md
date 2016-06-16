@@ -17,4 +17,3 @@ remind [OPTIONS] <text>
 		<event text> at <time> on <day>
 		"Get milk at 5pm on Wednesday"
 		"Do something at 21:05"
-
