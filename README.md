@@ -1,13 +1,13 @@
 remind - Quickly add events to your Google Calendar
 
-Setup:
-git clone https://github.com/andyforceno/remind/
-cd to remind/
-chmod +x remind
-./remind
+	Setup:
+	git clone https://github.com/andyforceno/remind/
+	cd to remind/
+	chmod +x remind
+	./remind
 
-The first time you execute remind OAuth setup will run
-Execute ./remind after setup finishes to start using remind
+	The first time you execute remind OAuth setup will run
+	Execute ./remind after setup finishes to start using remind
 
 	Usage: 
 	remind [OPTIONS] <text>
