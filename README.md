@@ -17,4 +17,5 @@ remind - Quickly add events to your Google Calendar
 			<event text> at <time> on <day>
 			"Get milk at 5pm on Wednesday"
 			"Do something at 21:05"
+			"Pay rent on June 29" (All day event)
 		
