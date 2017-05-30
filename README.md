@@ -16,6 +16,7 @@ remind - Quickly add events to your Google Calendar
 	-q | quick	Quickly add an event to your calendar
 			<event text> at <time> on <day>
 			"Get milk at 5pm on Wednesday"
-			"Do something at 21:05"
+			"Read a book at 21:00"
+			"Take a walk in 2 hours"
 			"Pay rent on June 29" (All day event)
 		

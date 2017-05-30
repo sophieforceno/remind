@@ -1,7 +1,7 @@
 #! /bin/bash
 
 #
-# Remind - Quickly add reminders to your Google Calendar via CLI - v0.5
+# Remind - Quickly add reminders to your Google Calendar via CLI - v0.3
 # by Andy Forceno <andy@aurorabox.tech>
 #
 # This script is distributed under the MIT license
