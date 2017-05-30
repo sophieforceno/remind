@@ -64,8 +64,8 @@ echo -e "\nAccess & refresh token have been saved to ~/.remindrc\n"
 
 validate_token () {
 	# Check for expired or invalid tokens
-	# Arbitrary API call to check for invalid token (requests the last 20 events on your calendar)	
-	cal_list=$(curl -s -H "Authorization: Bearer $access_token" -X GET https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=20&key=$api_key)
+	# Arbitrary API call to check for invalid token (requests the last 2 events on your calendar)	
+	cal_list=$(curl -s -H "Authorization: Bearer $access_token" -X GET https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=2&key=$api_key)
 
 	# If $cal_list is empty or contains the word "invalid"
 	# tokens have expired, so refresh them
