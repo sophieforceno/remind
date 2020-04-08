@@ -1,7 +1,7 @@
 remind - Quickly add events to your Google Calendar
 
 	Setup:
-	git clone https://github.com/andyforceno/remind/
+	git clone https://github.com/SyntrophicConsortium/remind/
 	cd to remind/
 	chmod +x remind
 	./remind
