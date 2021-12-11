@@ -2,7 +2,7 @@
 
 #
 # Remind - Quickly add reminders to your Google Calendar via CLI - v0.3
-# by Andy Forceno <andy@aurorabox.tech>
+# by Sophie Forceno
 #
 # This script is distributed under the MIT license
 # See license text at end of script
@@ -19,8 +19,6 @@ args=("$@")
 client_id="11641730600-mmlp1qm53uf26c0m8nlf0mtnq5o6nvjp.apps.googleusercontent.com"
 api_key="AIzaSyBqmgl2tdSGphOJD_rJqysFLEPC0e4Z1BQ"
 secret="pc8WovSD9EcJBn43udKHTA0T"
-# This script is brought to you by Echo & the Bunnymen:
-# https://www.youtube.com/watch?v=scuzLOILJYI
 
 Authentication () {
 	scope=${SCOPE:-"https://www.googleapis.com/auth/calendar"}	
@@ -143,7 +141,7 @@ EOF
 esac
 
 # The MIT License (MIT)
-# Copyright (c) 2016 Andy Forceno
+# Copyright (c) 2016 Sophie Forceno
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), 
 # to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, 
